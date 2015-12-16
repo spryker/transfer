@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @method TransferConfig getConfig()
  */
-class TransferDependencyContainer extends AbstractBusinessFactory
+class TransferBusinessFactory extends AbstractBusinessFactory
 {
 
     /**
