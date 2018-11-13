@@ -14,7 +14,7 @@
     /**
      * @var array
      */
-    protected $transferMetadata = [
+    protected static $transferMetadata = [
     {% for property in normalizedProperties %}
     self::{{ property.propertyConst }} => [
             'type' => '{{ property.type_fully_qualified }}',
@@ -40,7 +40,7 @@
     /**
      * @var array
      */
-    protected $transferPropertyNameMap = [
+    protected static $transferPropertyNameMap = [
     {% for propertyNameUnderScore, propertyNameCamelCase  in propertyNameMap %}
     '{{ propertyNameUnderScore }}' => '{{ propertyNameCamelCase }}',
     {% endfor -%}
