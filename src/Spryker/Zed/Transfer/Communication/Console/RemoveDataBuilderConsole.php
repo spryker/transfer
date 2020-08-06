@@ -15,10 +15,10 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @method \Spryker\Zed\Transfer\Business\TransferFacadeInterface getFacade()
  * @method \Spryker\Zed\Transfer\Communication\TransferCommunicationFactory getFactory()
  */
-class TransferGeneratorConsole extends Console
+class RemoveDataBuilderConsole extends Console
 {
-    public const COMMAND_NAME = 'transfer:generate';
-    public const COMMAND_DESCRIPTION = 'Generates data transfer objects from transfer XML definition files';
+    public const COMMAND_NAME = 'transfer:databuilder:remove';
+    public const COMMAND_DESCRIPTION = 'Removes the generated data builders';
 
     /**
      * @return void
@@ -41,10 +41,8 @@ class TransferGeneratorConsole extends Console
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $transferFacade = $this->getFacade();
-        $messenger = $this->getMessenger();
 
-        $transferFacade->deleteGeneratedDataTransferObjects();
-        $transferFacade->generateTransferObjects($messenger);
+        $transferFacade->deleteGeneratedDataBuilderObjects();
 
         return static::CODE_SUCCESS;
     }
