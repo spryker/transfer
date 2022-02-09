@@ -395,7 +395,9 @@ class ClassDefinition implements ClassDefinitionInterface
         }
 
         if ($this->isCollection($property)) {
-            return '\ArrayObject|\Generated\Shared\Transfer\\' . $property['type'];
+            $type = preg_replace('/\[\]/', '', $property['type']);
+
+            return "\ArrayObject|array<$type>";
         }
 
         if ($this->isTypeTransferObject($property)) {
@@ -445,7 +447,9 @@ class ClassDefinition implements ClassDefinitionInterface
         }
 
         if ($this->isCollection($property)) {
-            return '\ArrayObject|\Generated\Shared\Transfer\\' . $property['type'];
+            $type = preg_replace('/\[\]/', '', $property['type']);
+
+            return "\ArrayObject|array<$type>";
         }
 
         if ($this->isTypeTransferObject($property)) {
@@ -673,7 +677,9 @@ class ClassDefinition implements ClassDefinitionInterface
         }
 
         if ($this->isCollection($property)) {
-            return '\\ArrayObject|\Generated\Shared\Transfer\\' . $property['type'];
+            $type = preg_replace('/\[\]/', '', $property['type']);
+
+            return "\ArrayObject|array<$type>";
         }
 
         if ($this->isTypeTransferObject($property)) {
