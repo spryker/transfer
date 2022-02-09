@@ -118,9 +118,7 @@ class TransferValidator implements TransferValidatorInterface
                 continue;
             }
 
-            /** @var \Laminas\Config\Config $configObject */
-            $configObject = Factory::fromFile($file->getPathname(), true);
-            $definition = $configObject->toArray();
+            $definition = Factory::fromFile($file->getPathname(), true)->toArray();
             $definition = $this->normalize($definition);
 
             $module = $this->getModuleFromPathName($file->getFilename());
@@ -346,8 +344,7 @@ class TransferValidator implements TransferValidatorInterface
     {
         $filter = new UnderscoreToCamelCase();
 
-        /** @phpstan-var string */
-        return $filter->filter(str_replace(static::TRANSFER_SCHEMA_SUFFIX, '', $fileName));
+        return (string)$filter->filter(str_replace(static::TRANSFER_SCHEMA_SUFFIX, '', $fileName));
     }
 
     /**

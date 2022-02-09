@@ -59,15 +59,12 @@ class EntityTransferDefinitionLoader extends TransferDefinitionLoader
     {
         $xmlTransferDefinitions = $this->finder->getXmlTransferDefinitionFiles();
         foreach ($xmlTransferDefinitions as $xmlTransferDefinition) {
-            /** @var array<string, string> $xml */
             $xml = simplexml_load_string($xmlTransferDefinition->getContents());
             $namespace = (string)$xml['namespace'];
 
             $transferDefinitionFilePath = $xmlTransferDefinition->getPathname();
             $containingBundle = $this->getContainingBundleFromPathName($transferDefinitionFilePath);
-            /** @var \Laminas\Config\Config $configObject */
-            $configObject = Factory::fromFile($transferDefinitionFilePath, true);
-            $definition = $configObject->toArray();
+            $definition = Factory::fromFile($transferDefinitionFilePath, true)->toArray();
             $definition[static::ENTITY_NAMESPACE] = $namespace;
             $definition[static::ENTITY_SCHEMA_PATHNAME] = $transferDefinitionFilePath;
 

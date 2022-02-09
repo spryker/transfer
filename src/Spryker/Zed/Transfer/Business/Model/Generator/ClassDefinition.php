@@ -11,6 +11,7 @@ use ArrayObject;
 use Laminas\Filter\Word\CamelCaseToUnderscore;
 use Laminas\Filter\Word\UnderscoreToCamelCase;
 use Spryker\DecimalObject\Decimal;
+use Spryker\Shared\Kernel\Transfer\AbstractTransfer;
 use Spryker\Shared\Transfer\TypeValidation\TransferTypeValidatorTrait;
 use Spryker\Zed\Transfer\Business\Exception\InvalidAssociativeTypeException;
 use Spryker\Zed\Transfer\Business\Exception\InvalidAssociativeValueException;
@@ -265,7 +266,6 @@ class ClassDefinition implements ClassDefinitionInterface
      */
     protected function setPropertyNameMap(array $properties): void
     {
-        /** @var array<string, string> $property */
         foreach ($properties as $property) {
             $nameCamelCase = $this->getPropertyName($property);
             $this->propertyNameMap[$property['name_underscore']] = $nameCamelCase;
@@ -300,6 +300,9 @@ class ClassDefinition implements ClassDefinitionInterface
 
             if ($this->isValueObject($property)) {
                 $property = $this->buildValueObjectPropertyDefinition($property);
+            }
+            if ($this->isAbstractTransferOrArray($property['type'])) {
+                $property = $this->buildAbstractTransferPropertyDefinition($property);
             }
 
             $property['is_associative'] = $this->isAssociativeArray($property);
@@ -341,6 +344,25 @@ class ClassDefinition implements ClassDefinitionInterface
      *
      * @return array
      */
+    protected function buildAbstractTransferPropertyDefinition(array $property): array
+    {
+        $property['is_transfer'] = true;
+        $property[static::TYPE_FULLY_QUALIFIED] = AbstractTransfer::class;
+
+        if (preg_match('/\[\]$/', $property['type'])) {
+            $property['is_collection'] = true;
+
+            return $property;
+        }
+
+        return $property;
+    }
+
+    /**
+     * @param array<string, mixed> $property
+     *
+     * @return array
+     */
     protected function buildValueObjectPropertyDefinition(array $property): array
     {
         $property['is_value_object'] = true;
@@ -357,6 +379,16 @@ class ClassDefinition implements ClassDefinitionInterface
     protected function isTransferOrTransferArray($type): bool
     {
         return (bool)preg_match('/^[A-Z].*/', $type);
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return bool
+     */
+    protected function isAbstractTransferOrArray(string $type): bool
+    {
+        return $type === 'AbstractTransfer' || $type === 'AbstractTransfer[]';
     }
 
     /**
@@ -394,6 +426,14 @@ class ClassDefinition implements ClassDefinitionInterface
             return 'array';
         }
 
+        if ($this->isTypeAbstractTransferArray($property)) {
+            return sprintf('\ArrayObject|\%s[]', $property[static::TYPE_FULLY_QUALIFIED]);
+        }
+
+        if ($this->isTypeAbstractTransfer($property)) {
+            return sprintf('%s|\null', $property[static::TYPE_FULLY_QUALIFIED]);
+        }
+
         if ($this->isCollection($property)) {
             return '\ArrayObject|\Generated\Shared\Transfer\\' . $property['type'];
         }
@@ -413,6 +453,26 @@ class ClassDefinition implements ClassDefinitionInterface
     protected function isTypeTransferObject(array $property): bool
     {
         return ($property['is_transfer']);
+    }
+
+    /**
+     * @param array<string, mixed> $property
+     *
+     * @return bool
+     */
+    protected function isTypeAbstractTransfer(array $property): bool
+    {
+        return ($property['is_transfer'] && $property[static::TYPE_FULLY_QUALIFIED] === AbstractTransfer::class);
+    }
+
+    /**
+     * @param array<string, mixed> $property
+     *
+     * @return bool
+     */
+    protected function isTypeAbstractTransferArray(array $property): bool
+    {
+        return ($property['is_transfer'] && $property['is_collection'] && $property[static::TYPE_FULLY_QUALIFIED] === AbstractTransfer::class);
     }
 
     /**
@@ -444,6 +504,14 @@ class ClassDefinition implements ClassDefinitionInterface
             return 'array';
         }
 
+        if ($this->isTypeAbstractTransferArray($property)) {
+            return '\ArrayObject|\\' . $property[static::TYPE_FULLY_QUALIFIED] . '[]';
+        }
+
+        if ($this->isTypeAbstractTransfer($property)) {
+            return '\\' . $property[static::TYPE_FULLY_QUALIFIED];
+        }
+
         if ($this->isCollection($property)) {
             return '\ArrayObject|\Generated\Shared\Transfer\\' . $property['type'];
         }
@@ -472,6 +540,10 @@ class ClassDefinition implements ClassDefinitionInterface
 
         if ($this->isArray($property)) {
             return 'mixed';
+        }
+
+        if ($this->isTypeAbstractTransferArray($property)) {
+            return '\\' . $property[static::TYPE_FULLY_QUALIFIED];
         }
 
         if ($this->isCollection($property)) {
@@ -627,10 +699,8 @@ class ClassDefinition implements ClassDefinitionInterface
     protected function getPropertyConstantName(array $property): string
     {
         $filter = new CamelCaseToUnderscore();
-        /** @var string $value */
-        $value = $filter->filter($property['name']);
 
-        return mb_strtoupper($value);
+        return mb_strtoupper($filter->filter($property['name']));
     }
 
     /**
@@ -641,10 +711,8 @@ class ClassDefinition implements ClassDefinitionInterface
     protected function getPropertyName(array $property): string
     {
         $filter = new UnderscoreToCamelCase();
-        /** @var string $value */
-        $value = $filter->filter($property['name']);
 
-        return lcfirst($value);
+        return lcfirst($filter->filter($property['name']));
     }
 
     /**
@@ -670,6 +738,14 @@ class ClassDefinition implements ClassDefinitionInterface
 
         if ($this->isArrayCollection($property)) {
             return 'array';
+        }
+
+        if ($this->isTypeAbstractTransferArray($property)) {
+            return '\ArrayObject|\\' . $property[static::TYPE_FULLY_QUALIFIED] . '[]';
+        }
+
+        if ($this->isTypeAbstractTransfer($property)) {
+            return '\\' . $property[static::TYPE_FULLY_QUALIFIED] . '|null';
         }
 
         if ($this->isCollection($property)) {
@@ -1156,7 +1232,7 @@ class ClassDefinition implements ClassDefinitionInterface
      */
     protected function getShortClassName(string $fullyQualifiedClassName): string
     {
-        return substr((string)strrchr($fullyQualifiedClassName, '\\'), 1);
+        return substr(strrchr($fullyQualifiedClassName, '\\'), 1);
     }
 
     /**
@@ -1494,7 +1570,6 @@ class ClassDefinition implements ClassDefinitionInterface
      */
     protected function getGetCollectionElementReturnType(array $property): string
     {
-        /** @var string $propertyReturnType */
         $propertyReturnType = str_replace('[]', '', $property['type']);
 
         if ($propertyReturnType === 'array') {
