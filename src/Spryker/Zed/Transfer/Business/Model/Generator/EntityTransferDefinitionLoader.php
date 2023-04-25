@@ -59,8 +59,9 @@ class EntityTransferDefinitionLoader extends TransferDefinitionLoader
     {
         $xmlTransferDefinitions = $this->finder->getXmlTransferDefinitionFiles();
         foreach ($xmlTransferDefinitions as $xmlTransferDefinition) {
+            $options = LIBXML_COMPACT | LIBXML_SCHEMA_CREATE;
             /** @var array<string, string> $xml */
-            $xml = simplexml_load_string($xmlTransferDefinition->getContents());
+            $xml = simplexml_load_string($xmlTransferDefinition->getContents(), 'SimpleXMLElement', $options);
             $namespace = (string)$xml['namespace'];
 
             $transferDefinitionFilePath = $xmlTransferDefinition->getPathname();
