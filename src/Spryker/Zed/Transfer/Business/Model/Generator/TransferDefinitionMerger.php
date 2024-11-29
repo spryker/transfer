@@ -196,6 +196,9 @@ class TransferDefinitionMerger implements MergerInterface
 
                         break;
                     }
+                case 'dataBuilderRule':
+                    if (is skip allowed with a default false)
+                        break;
                 default:
                     if ($propertyValue !== $property[$propertyName]) {
                         throw new Exception(sprintf(
