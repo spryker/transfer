@@ -253,6 +253,9 @@ class TransferDefinitionMerger implements MergerInterface
 
                         break;
                     }
+                case 'dataBuilderRule':
+                    if (is skip allowed with a default false)
+                        break;
                 default:
                     if (
                         $this->transferConfig->isProjectTransferOverrideActive() &&
