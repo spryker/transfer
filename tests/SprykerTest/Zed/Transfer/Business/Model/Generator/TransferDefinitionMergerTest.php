@@ -168,7 +168,6 @@ class TransferDefinitionMergerTest extends Unit
         $reflectionClass = new ReflectionClass(TransferDefinitionMerger::class);
 
         $getNormalizedTransferNameMethod = $reflectionClass->getMethod('getNormalizedTransferName');
-        $getNormalizedTransferNameMethod->setAccessible(true);
 
         // Act & Assert
         $this->assertEquals('ItemMetadata', $getNormalizedTransferNameMethod->invoke($merger, 'ItemMetadataTransfer'));
@@ -185,7 +184,6 @@ class TransferDefinitionMergerTest extends Unit
         $reflectionClass = new ReflectionClass(TransferDefinitionMerger::class);
 
         $hasTransferSuffixMethod = $reflectionClass->getMethod('hasTransferSuffix');
-        $hasTransferSuffixMethod->setAccessible(true);
 
         // Act & Assert
         $this->assertTrue($hasTransferSuffixMethod->invoke($merger, 'ItemMetadataTransfer'));
