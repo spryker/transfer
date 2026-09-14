@@ -43,22 +43,29 @@ class TransferSanitizerProcessor
     }
 
     /**
-     * @param array<string, array> $record
+     * @param \Monolog\LogRecord|array<string, array> $record
      *
-     * @return array<string, array>
+     * @return \Monolog\LogRecord|array<string, array>
      */
-    public function __invoke(array $record): array
+    public function __invoke($record)
     {
         $transfer = $this->findTransfer((array)$record[static::RECORD_CONTEXT]);
         if (!($transfer instanceof TransferInterface)) {
             return $record;
         }
-        unset($record[static::RECORD_CONTEXT][static::CONTEXT_KEY]);
 
         $contextData = $this->transferToArray($transfer);
         $contextData['class'] = get_class($transfer);
         $sanitizedData = $this->sanitizer->sanitize($contextData);
-        $record[static::RECORD_EXTRA][static::EXTRA] = $sanitizedData;
+
+        if (is_array($record)) {
+            unset($record[static::RECORD_CONTEXT][static::CONTEXT_KEY]);
+            $record[static::RECORD_EXTRA][static::EXTRA] = $sanitizedData;
+
+            return $record;
+        }
+
+        $record->extra[static::EXTRA] = $sanitizedData;
 
         return $record;
     }
