@@ -7,9 +7,9 @@
 
 namespace Spryker\Zed\Transfer\Business\Model;
 
-use Laminas\Config\Factory;
 use Laminas\Filter\Word\UnderscoreToCamelCase;
 use Psr\Log\LoggerInterface;
+use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 use Spryker\Zed\Transfer\Business\Model\Generator\FinderInterface;
 use Spryker\Zed\Transfer\Business\XmlValidator\XmlValidatorInterface;
 use Spryker\Zed\Transfer\TransferConfig;
@@ -80,7 +80,8 @@ class TransferValidator implements TransferValidatorInterface
         LoggerInterface $messenger,
         FinderInterface $finder,
         TransferConfig $transferConfig,
-        XmlValidatorInterface $xmlValidator
+        XmlValidatorInterface $xmlValidator,
+        protected UtilEncodingServiceInterface $utilEncodingService
     ) {
         $this->messenger = $messenger;
         $this->finder = $finder;
@@ -112,9 +113,7 @@ class TransferValidator implements TransferValidatorInterface
                 continue;
             }
 
-            /** @var \Laminas\Config\Config $configObject */
-            $configObject = Factory::fromFile($file->getPathname(), true);
-            $definition = $configObject->toArray();
+            $definition = $this->utilEncodingService->convertXmlFileToArray($file->getPathname());
             $definition = $this->normalize($definition);
 
             $module = $this->getModuleFromPathName($file->getFilename());

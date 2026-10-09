@@ -9,6 +9,7 @@ namespace SprykerTest\Zed\Transfer\Business\Model;
 
 use Codeception\Stub;
 use Codeception\Test\Unit;
+use Spryker\Service\UtilEncoding\UtilEncodingService;
 use Spryker\Zed\Transfer\Business\Model\Generator\TransferDefinitionFinder;
 use Spryker\Zed\Transfer\Business\Model\TransferValidator;
 use Spryker\Zed\Transfer\Business\XmlValidator\XmlValidatorInterface;
@@ -43,7 +44,7 @@ class TransferValidatorTest extends Unit
         $messenger = $this->getMessengerMock();
         $config = new TransferConfig();
         $xmlValidator = $this->getXmlValidatorMock();
-        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator);
+        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator, new UtilEncodingService());
 
         $options = [
             'bundle' => null,
@@ -63,7 +64,7 @@ class TransferValidatorTest extends Unit
         $messenger = $this->getMessengerMock();
         $config = new TransferConfig();
         $xmlValidator = $this->getXmlValidatorMock();
-        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator);
+        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator, new UtilEncodingService());
 
         $options = [
             'bundle' => null,
@@ -85,7 +86,7 @@ class TransferValidatorTest extends Unit
         $config->expects($this->any())->method('isTransferNameValidated')->willReturn(true);
         $xmlValidator = $this->getXmlValidatorMock();
 
-        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator);
+        $transferValidator = new TransferValidator($messenger, $definitionFinder, $config, $xmlValidator, new UtilEncodingService());
 
         $options = [
             'bundle' => null,

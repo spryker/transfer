@@ -15,6 +15,7 @@ use Generated\Shared\Transfer\GeneratedNestedTransfer;
 use Generated\Shared\Transfer\GeneratedStrictTransfer;
 use Generated\Shared\Transfer\GeneratedTransfer;
 use Spryker\DecimalObject\Decimal;
+use Spryker\Service\UtilEncoding\UtilEncodingService;
 use Spryker\Shared\Kernel\Transfer\Exception\InvalidStrictTypeException;
 use Spryker\Shared\Kernel\Transfer\Exception\NullValueException;
 use Spryker\Shared\Kernel\Transfer\Exception\RequiredTransferPropertyException;
@@ -817,7 +818,7 @@ class GeneratedTransferTest extends Unit
         }
         $finder = new TransferDefinitionFinder($sourceDirectories);
         $normalizer = new DefinitionNormalizer();
-        $loader = new TransferDefinitionLoader($finder, $normalizer, $config);
+        $loader = new TransferDefinitionLoader($finder, $normalizer, $config, new UtilEncodingService());
 
         return new TransferDefinitionBuilder(
             $loader,

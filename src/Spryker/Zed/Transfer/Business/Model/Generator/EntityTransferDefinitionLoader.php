@@ -7,7 +7,6 @@
 
 namespace Spryker\Zed\Transfer\Business\Model\Generator;
 
-use Laminas\Config\Factory;
 use Spryker\Zed\Transfer\Business\Exception\EmptyEntityTransferDefinitionException;
 
 class EntityTransferDefinitionLoader extends AbstractTransferDefinitionLoader
@@ -62,9 +61,7 @@ class EntityTransferDefinitionLoader extends AbstractTransferDefinitionLoader
 
             $transferDefinitionFilePath = $xmlTransferDefinition->getPathname();
             $containingBundle = $this->getContainingBundleFromPathName($transferDefinitionFilePath);
-            /** @var \Laminas\Config\Config $configObject */
-            $configObject = Factory::fromFile($transferDefinitionFilePath, true);
-            $definition = $configObject->toArray();
+            $definition = $this->utilEncodingService->convertXmlFileToArray($transferDefinitionFilePath);
             $definition[static::ENTITY_NAMESPACE] = $namespace;
             $definition[static::ENTITY_SCHEMA_PATHNAME] = $transferDefinitionFilePath;
 

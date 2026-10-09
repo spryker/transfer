@@ -7,6 +7,7 @@
 
 namespace Spryker\Zed\Transfer\Business\Model\Generator;
 
+use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 use Spryker\Zed\Transfer\TransferConfig;
 
 abstract class AbstractTransferDefinitionLoader implements LoaderInterface
@@ -29,7 +30,8 @@ abstract class AbstractTransferDefinitionLoader implements LoaderInterface
     public function __construct(
         protected FinderInterface $finder,
         protected DefinitionNormalizerInterface $definitionNormalizer,
-        protected TransferConfig $transferConfig
+        protected TransferConfig $transferConfig,
+        protected UtilEncodingServiceInterface $utilEncodingService
     ) {
     }
 

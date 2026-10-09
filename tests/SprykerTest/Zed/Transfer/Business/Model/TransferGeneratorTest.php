@@ -8,6 +8,7 @@
 namespace SprykerTest\Zed\Transfer\Business\Model;
 
 use Codeception\Test\Unit;
+use Spryker\Service\UtilEncoding\UtilEncodingService;
 use Spryker\Zed\Transfer\Business\Model\Generator\ClassDefinition;
 use Spryker\Zed\Transfer\Business\Model\Generator\ClassGenerator;
 use Spryker\Zed\Transfer\Business\Model\Generator\DefinitionBuilderInterface;
@@ -290,7 +291,7 @@ class TransferGeneratorTest extends Unit
         }
         $finder = new TransferDefinitionFinder($sourceDirectories);
         $normalizer = new DefinitionNormalizer();
-        $loader = new TransferDefinitionLoader($finder, $normalizer, $config);
+        $loader = new TransferDefinitionLoader($finder, $normalizer, $config, new UtilEncodingService());
         $definitionBuilder = new TransferDefinitionBuilder(
             $loader,
             new TransferDefinitionMerger(new TransferConfig(), $this->getMessengerMock()),

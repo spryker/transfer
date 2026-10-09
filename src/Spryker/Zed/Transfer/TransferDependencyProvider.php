@@ -24,6 +24,8 @@ class TransferDependencyProvider extends AbstractBundleDependencyProvider
      */
     public const SERVICE_UTIL_GLOB = 'util glob service';
 
+    public const string SERVICE_UTIL_ENCODING = 'SERVICE_UTIL_ENCODING';
+
     /**
      * @var string
      */
@@ -55,6 +57,7 @@ class TransferDependencyProvider extends AbstractBundleDependencyProvider
         });
 
         $container = $this->addUtilGlobService($container);
+        $container = $this->addUtilEncodingService($container);
         $container = $this->addPropelFacade($container);
 
         return $container;
@@ -66,6 +69,15 @@ class TransferDependencyProvider extends AbstractBundleDependencyProvider
             return new TransferToPropelFacadeBridge(
                 $container->getLocator()->propel()->facade(),
             );
+        });
+
+        return $container;
+    }
+
+    protected function addUtilEncodingService(Container $container): Container
+    {
+        $container->set(static::SERVICE_UTIL_ENCODING, function (Container $container) {
+            return $container->getLocator()->utilEncoding()->service();
         });
 
         return $container;

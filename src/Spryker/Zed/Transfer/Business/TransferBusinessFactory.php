@@ -8,6 +8,7 @@
 namespace Spryker\Zed\Transfer\Business;
 
 use Psr\Log\LoggerInterface;
+use Spryker\Service\UtilEncoding\UtilEncodingServiceInterface;
 use Spryker\Zed\Kernel\Business\AbstractBusinessFactory;
 use Spryker\Zed\Transfer\Business\DataBuilder\Definition\DataBuilderDefinitionFinder;
 use Spryker\Zed\Transfer\Business\EntityTransfer\Definition\EntityTransferDefinitionFinder;
@@ -160,6 +161,7 @@ class TransferBusinessFactory extends AbstractBusinessFactory
             $this->createFinder(),
             $this->createDefinitionNormalizer(),
             $this->getConfig(),
+            $this->getUtilEncodingService(),
         );
     }
 
@@ -172,6 +174,7 @@ class TransferBusinessFactory extends AbstractBusinessFactory
             $this->createEntityFinder(),
             $this->createEntityDefinitionNormalizer(),
             $this->getConfig(),
+            $this->getUtilEncodingService(),
         );
     }
 
@@ -184,6 +187,7 @@ class TransferBusinessFactory extends AbstractBusinessFactory
             $this->createDataBuilderFinder(),
             $this->createDefinitionNormalizer(),
             $this->getConfig(),
+            $this->getUtilEncodingService(),
         );
     }
 
@@ -337,6 +341,7 @@ class TransferBusinessFactory extends AbstractBusinessFactory
             $this->createFinder(),
             $this->getConfig(),
             $this->createXmlValidator(),
+            $this->getUtilEncodingService(),
         );
     }
 
@@ -377,6 +382,11 @@ class TransferBusinessFactory extends AbstractBusinessFactory
     public function getUtilGlobService(): TransferToUtilGlobServiceInterface
     {
         return $this->getProvidedDependency(TransferDependencyProvider::SERVICE_UTIL_GLOB);
+    }
+
+    public function getUtilEncodingService(): UtilEncodingServiceInterface
+    {
+        return $this->getProvidedDependency(TransferDependencyProvider::SERVICE_UTIL_ENCODING);
     }
 
     public function getPropelFacade(): TransferToPropelFacadeInterface

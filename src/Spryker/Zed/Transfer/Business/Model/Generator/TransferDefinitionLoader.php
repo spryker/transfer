@@ -8,7 +8,6 @@
 namespace Spryker\Zed\Transfer\Business\Model\Generator;
 
 use InvalidArgumentException;
-use Laminas\Config\Factory;
 use Laminas\Filter\FilterChain;
 use Laminas\Filter\Word\CamelCaseToUnderscore;
 use Laminas\Filter\Word\DashToCamelCase;
@@ -42,9 +41,7 @@ class TransferDefinitionLoader extends AbstractTransferDefinitionLoader
         foreach ($xmlTransferDefinitions as $xmlTransferDefinition) {
             $bundle = $this->getBundleFromPathName($xmlTransferDefinition->getFilename());
             $containingBundle = $this->getContainingBundleFromPathName($xmlTransferDefinition->getPathname());
-            /** @var \Laminas\Config\Config $configObject */
-            $configObject = Factory::fromFile($xmlTransferDefinition->getPathname(), true);
-            $definition = $configObject->toArray();
+            $definition = $this->utilEncodingService->convertXmlFileToArray($xmlTransferDefinition->getPathname());
             $isCore = str_starts_with($xmlTransferDefinition->getPathname(), $this->transferConfig->getApplicationVendorDirectory());
 
             $this->addDefinition($definition, $bundle, $containingBundle, $isCore);
