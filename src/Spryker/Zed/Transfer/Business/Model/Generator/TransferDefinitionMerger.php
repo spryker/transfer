@@ -34,6 +34,14 @@ class TransferDefinitionMerger implements MergerInterface
         '⚠️ Description1: "%3$s"; Description2: "%4$s".' .
         'To fix this, search for \'property name="%2$s"\' in the code base and fix the wrong one.';
 
+    protected const string WARNING_MESSAGE_TRANSFER_STRICT_MODE_NOT_IDENTICAL = 'Strict mode mismatch detected for transfer %1$s. ' .
+        '⚠️ "strict" attribute value for this transfer must be identical across all definitions. Resolving as strict. ' .
+        'To fix this, search for \'name="%1$s"\' in the code base and align the "strict" attribute.';
+
+    protected const string WARNING_MESSAGE_PROPERTY_STRICT_MODE_NOT_IDENTICAL = 'Strict mode mismatch detected for transfer property %1$s.%2$s. ' .
+        '⚠️ "strict" attribute value for this property must be identical across all definitions. Resolving as strict. ' .
+        'To fix this, search for \'property name="%2$s"\' in the code base and align the "strict" attribute.';
+
     /**
      * @var array<string, array>
      */
@@ -59,6 +67,16 @@ class TransferDefinitionMerger implements MergerInterface
      */
     protected array $originalNames = [];
 
+    /**
+     * @var array<string, bool>
+     */
+    protected array $transferNamesWithToleratedStrictModeMismatch = [];
+
+    /**
+     * @var array<string, bool>
+     */
+    protected array $transferPropertiesWithToleratedStrictModeMismatch = [];
+
     public function __construct(TransferConfig $transferConfig)
     {
         $this->transferConfig = $transferConfig;
@@ -75,6 +93,8 @@ class TransferDefinitionMerger implements MergerInterface
         $this->messenger = $messenger;
         $this->mergedTransferDefinitions = [];
         $this->originalNames = [];
+        $this->transferNamesWithToleratedStrictModeMismatch = [];
+        $this->transferPropertiesWithToleratedStrictModeMismatch = [];
 
         $this->processTransferDefinitions($transferDefinitions);
 
@@ -147,7 +167,7 @@ class TransferDefinitionMerger implements MergerInterface
      */
     protected function mergeDefinitions(array $existingDefinition, array $definitionToMerge, $transferName): array
     {
-        $this->assertTransferStrictModeIsConsistent($existingDefinition, $definitionToMerge);
+        $this->assertTransferStrictModeIsConsistent($existingDefinition, $definitionToMerge, $transferName);
 
         $mergedDefinition = [
             'name' => $existingDefinition['name'],
@@ -156,11 +176,19 @@ class TransferDefinitionMerger implements MergerInterface
             'property' => $this->mergeProperty($existingDefinition['property'], $definitionToMerge['property'], $transferName),
         ];
 
-        if (isset($existingDefinition[DefinitionNormalizer::KEY_STRICT_MODE])) {
-            $mergedDefinition[DefinitionNormalizer::KEY_STRICT_MODE] = $existingDefinition[DefinitionNormalizer::KEY_STRICT_MODE];
+        if ($this->isTransferDefinitionStrict($existingDefinition) || $this->isTransferDefinitionStrict($definitionToMerge)) {
+            $mergedDefinition[DefinitionNormalizer::KEY_STRICT_MODE] = true;
         }
 
         return $mergedDefinition;
+    }
+
+    /**
+     * @param array<string, mixed> $transferDefinition
+     */
+    protected function isTransferDefinitionStrict(array $transferDefinition): bool
+    {
+        return ($transferDefinition[DefinitionNormalizer::KEY_STRICT_MODE] ?? false) === true;
     }
 
     /**
@@ -226,9 +254,9 @@ class TransferDefinitionMerger implements MergerInterface
      */
     protected function mergeProperties(array $property, array $propertyToMerge, $transferName): array
     {
-        foreach ($propertyToMerge as $propertyName => $propertyValue) {
-            $this->assertTransferPropertyStrictModeIsConsistent($property, $propertyToMerge, $transferName);
+        $this->assertTransferPropertyStrictModeIsConsistent($property, $propertyToMerge, $transferName);
 
+        foreach ($propertyToMerge as $propertyName => $propertyValue) {
             if (!array_key_exists($propertyName, $property)) {
                 $property[$propertyName] = $propertyValue;
 
@@ -347,12 +375,22 @@ class TransferDefinitionMerger implements MergerInterface
      * @param array<string, mixed> $transferDefinitionToMerge
      *
      * @throws \Spryker\Zed\Transfer\Business\Exception\TransferDefinitionMismatchException
-     *
-     * @return void
      */
-    protected function assertTransferStrictModeIsConsistent(array $existingTransferDefinition, array $transferDefinitionToMerge): void
+    protected function assertTransferStrictModeIsConsistent(array $existingTransferDefinition, array $transferDefinitionToMerge, string $transferName): void
     {
         if ($this->validateNonMergeableAttribute(DefinitionNormalizer::KEY_STRICT_MODE, $existingTransferDefinition, $transferDefinitionToMerge)) {
+            return;
+        }
+
+        if ($this->transferConfig->isTransferDefinitionConflictToleranceEnabled()) {
+            if (!isset($this->transferNamesWithToleratedStrictModeMismatch[$transferName])) {
+                $this->transferNamesWithToleratedStrictModeMismatch[$transferName] = true;
+
+                $this->logWarning(
+                    sprintf(static::WARNING_MESSAGE_TRANSFER_STRICT_MODE_NOT_IDENTICAL, $existingTransferDefinition['name']),
+                );
+            }
+
             return;
         }
 
@@ -376,6 +414,26 @@ class TransferDefinitionMerger implements MergerInterface
     protected function assertTransferPropertyStrictModeIsConsistent(array $existingTransferProperty, array $transferPropertyToMerge, string $transferName): void
     {
         if ($this->validateNonMergeableAttribute(DefinitionNormalizer::KEY_STRICT_MODE, $existingTransferProperty, $transferPropertyToMerge)) {
+            return;
+        }
+
+        if (isset($this->transferNamesWithToleratedStrictModeMismatch[$transferName])) {
+            return;
+        }
+
+        $propertyMismatchKey = $transferName . '.' . $existingTransferProperty['name'];
+
+        if (isset($this->transferPropertiesWithToleratedStrictModeMismatch[$propertyMismatchKey])) {
+            return;
+        }
+
+        if ($this->transferConfig->isTransferDefinitionConflictToleranceEnabled()) {
+            $this->transferPropertiesWithToleratedStrictModeMismatch[$propertyMismatchKey] = true;
+
+            $this->logWarning(
+                sprintf(static::WARNING_MESSAGE_PROPERTY_STRICT_MODE_NOT_IDENTICAL, $transferName, $existingTransferProperty['name']),
+            );
+
             return;
         }
 

@@ -9,6 +9,7 @@ namespace SprykerTest\Zed\Transfer\Business\Model\Generator;
 
 use Codeception\Test\Unit;
 use ReflectionClass;
+use Spryker\Zed\Transfer\Business\Exception\TransferDefinitionMismatchException;
 use Spryker\Zed\Transfer\Business\Model\Generator\TransferDefinitionMerger;
 use Spryker\Zed\Transfer\TransferConfig;
 use SprykerTest\Zed\Transfer\TransferBusinessTester;
@@ -107,6 +108,164 @@ class TransferDefinitionMergerTest extends Unit
         $merger = new TransferDefinitionMerger($transferConfig, $this->getMessengerMock());
 
         $merger->merge($transferDefinitions);
+    }
+
+    public function testMergeShouldThrowExceptionWhenStrictModeMismatchIsNotTolerated(): void
+    {
+        // Arrange
+        $this->expectException(TransferDefinitionMismatchException::class);
+        $this->expectExceptionMessage('Strict mode violation detected for transfer OrderCollection. "strict" attribute value for this transfer must be identical across all definitions.');
+
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getTransferDefinitionWithStrictMode(),
+            $helper->getTransferDefinitionWithoutStrictMode(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(false);
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $merger->merge($transferDefinitions);
+    }
+
+    public function testMergeShouldNotThrowAndResolveTransferAsStrictWhenStrictModeMismatchIsTolerated(): void
+    {
+        // Arrange
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getTransferDefinitionWithStrictMode(),
+            $helper->getTransferDefinitionWithoutStrictMode(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(true);
+
+        $messengerMock = $this->getMessengerMock();
+        $messengerMock->expects($this->once())->method('warning');
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $result = $merger->merge($transferDefinitions, $messengerMock);
+
+        // Assert
+        $this->assertTrue($result['OrderCollection']['strict']);
+    }
+
+    public function testMergeShouldNotThrowAndResolvePropertyAsStrictWhenStrictModeMismatchIsTolerated(): void
+    {
+        // Arrange
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getTransferDefinitionWithStrictProperty(),
+            $helper->getTransferDefinitionWithoutStrictProperty(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(true);
+
+        $messengerMock = $this->getMessengerMock();
+        $messengerMock->expects($this->once())->method('warning');
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $result = $merger->merge($transferDefinitions, $messengerMock);
+
+        // Assert
+        $this->assertTrue($result['Transfer']['property']['propertyA']['strict']);
+    }
+
+    public function testMergeShouldLogStrictModeMismatchWarningOnlyOnceAcrossMultipleConflictingDefinitions(): void
+    {
+        // Arrange
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getTransferDefinitionWithStrictMode(),
+            $helper->getTransferDefinitionWithoutStrictMode(),
+            $helper->getTransferDefinitionWithoutStrictMode(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(true);
+
+        $messengerMock = $this->getMessengerMock();
+        $messengerMock->expects($this->once())->method('warning');
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $result = $merger->merge($transferDefinitions, $messengerMock);
+
+        // Assert
+        $this->assertTrue($result['OrderCollection']['strict']);
+    }
+
+    public function testMergeOnlyMarksSharedOrStrictModuleOwnedPropertiesAsStrictWhenTransferLevelStrictModeMismatchIsTolerated(): void
+    {
+        // Arrange
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getOrderTransferDefinitionFromSalesModule(),
+            $helper->getOrderTransferDefinitionFromCheckoutModuleWithStrictMode(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(true);
+
+        $messengerMock = $this->getMessengerMock();
+        $messengerMock->expects($this->once())->method('warning');
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $result = $merger->merge($transferDefinitions, $messengerMock);
+
+        // Assert
+        $this->assertTrue($result['Order']['strict']);
+        $this->assertArrayNotHasKey('strict', $result['Order']['property']['idSalesOrder']);
+        $this->assertTrue($result['Order']['property']['items']['strict']);
+        $this->assertTrue($result['Order']['property']['checkoutData']['strict']);
+    }
+
+    public function testMergeShouldLogPropertyStrictModeMismatchWarningOnlyOnceAcrossMultipleConflictingDefinitions(): void
+    {
+        // Arrange
+        $helper = new TransferDefinitionMergerHelper();
+        $transferDefinitions = [
+            $helper->getTransferDefinitionWithStrictProperty(),
+            $helper->getTransferDefinitionWithoutStrictProperty(),
+            $helper->getTransferDefinitionWithoutStrictProperty(),
+        ];
+
+        $transferConfigMock = $this->getMockBuilder(TransferConfig::class)
+            ->onlyMethods(['isTransferDefinitionConflictToleranceEnabled'])
+            ->getMock();
+        $transferConfigMock->method('isTransferDefinitionConflictToleranceEnabled')->willReturn(true);
+
+        $messengerMock = $this->getMessengerMock();
+        $messengerMock->expects($this->once())->method('warning');
+
+        $merger = new TransferDefinitionMerger($transferConfigMock);
+
+        // Act
+        $result = $merger->merge($transferDefinitions, $messengerMock);
+
+        // Assert
+        $this->assertTrue($result['Transfer']['property']['propertyA']['strict']);
     }
 
     /**

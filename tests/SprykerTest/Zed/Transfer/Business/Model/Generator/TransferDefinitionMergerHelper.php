@@ -166,6 +166,131 @@ class TransferDefinitionMergerHelper
         ];
     }
 
+    public function getTransferDefinitionWithStrictMode(): array
+    {
+        return [
+            'name' => 'OrderCollection',
+            'entity-namespace' => null,
+            'strict' => true,
+            'property' => [
+                [
+                    'name' => 'orders',
+                    'type' => 'Order[]',
+                    'singular' => 'order',
+                    'bundles' => [
+                        'Sales',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function getTransferDefinitionWithoutStrictMode(): array
+    {
+        return [
+            'name' => 'OrderCollection',
+            'entity-namespace' => null,
+            'property' => [
+                [
+                    'name' => 'orders',
+                    'type' => 'Order[]',
+                    'singular' => 'order',
+                    'bundles' => [
+                        'Payone',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function getOrderTransferDefinitionFromSalesModule(): array
+    {
+        return [
+            'name' => 'Order',
+            'entity-namespace' => null,
+            'property' => [
+                [
+                    'name' => 'idSalesOrder',
+                    'type' => 'int',
+                    'bundles' => [
+                        'Sales',
+                    ],
+                ],
+                [
+                    'name' => 'items',
+                    'type' => 'Item[]',
+                    'singular' => 'item',
+                    'bundles' => [
+                        'Sales',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function getOrderTransferDefinitionFromCheckoutModuleWithStrictMode(): array
+    {
+        return [
+            'name' => 'Order',
+            'entity-namespace' => null,
+            'strict' => true,
+            'property' => [
+                [
+                    'name' => 'items',
+                    'type' => 'Item[]',
+                    'singular' => 'item',
+                    'strict' => true,
+                    'bundles' => [
+                        'Checkout',
+                    ],
+                ],
+                [
+                    'name' => 'checkoutData',
+                    'type' => 'CheckoutData',
+                    'strict' => true,
+                    'bundles' => [
+                        'Checkout',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function getTransferDefinitionWithStrictProperty(): array
+    {
+        return [
+            'name' => 'Transfer',
+            'entity-namespace' => null,
+            'property' => [
+                [
+                    'name' => 'propertyA',
+                    'type' => 'string',
+                    'strict' => true,
+                    'bundles' => [
+                        'Bundle1',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function getTransferDefinitionWithoutStrictProperty(): array
+    {
+        return [
+            'name' => 'Transfer',
+            'entity-namespace' => null,
+            'property' => [
+                [
+                    'name' => 'propertyA',
+                    'type' => 'string',
+                    'bundles' => [
+                        'Bundle2',
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public function getExpectedMergedItemMetadata(): array
     {
         return [

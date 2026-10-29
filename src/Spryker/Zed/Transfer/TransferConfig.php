@@ -389,4 +389,18 @@ class TransferConfig extends AbstractBundleConfig
     {
         return false;
     }
+
+    /**
+     * Specification:
+     * - Controls whether a conflict between different definitions of the same transfer or transfer property is tolerated during merge instead of failing generation.
+     * - Currently applies only to a mismatching "strict" attribute. When enabled, such a mismatch does not throw \Spryker\Zed\Transfer\Business\Exception\TransferDefinitionMismatchException; a warning is logged instead and the merged definition takes the safe ("strict") value.
+     * - Does NOT apply to a conflict with no safe default (e.g. a "type" mismatch), which always throws regardless of this setting. Extend this flag's usage if a similar safely-resolvable conflict is introduced for another attribute.
+     * - When disabled (default), a conflict throws \Spryker\Zed\Transfer\Business\Exception\TransferDefinitionMismatchException.
+     *
+     * @api
+     */
+    public function isTransferDefinitionConflictToleranceEnabled(): bool
+    {
+        return false;
+    }
 }
